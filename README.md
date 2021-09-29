@@ -8,7 +8,7 @@ The main features of the project are:
 - Proxies;
 - Url availability threshold;
 
-##HOWTO:
+## HOWTO:
 
 To run the script just python3 wp_checker.py with some keys and arguments:
 - __-S__ stays for standard method, it means that the script will use simple POST requests;
