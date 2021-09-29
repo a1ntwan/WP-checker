@@ -1,3 +1,4 @@
+---
 - name: prepare host for WPcheck
   hosts: all
   become: yes
