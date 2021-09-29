@@ -1,0 +1,122 @@
+- name: prepare host for WPcheck
+  hosts: all
+  become: yes
+
+  tasks:
+  
+  - name: check python3 version
+    shell: which python3
+    register: python_version
+    
+ 
+    block:
+ 
+      block:
+
+        - name: pre-task
+          apt:
+            name:
+              - python3-apt
+              - software-properties-common
+            update_cache: yes
+            state: latest
+    
+        - name: add repo for python3.7
+          apt_repository:
+            repo: 'ppa:deadsnakes/ppa'
+            codename: ansible_lsb.codename
+     
+        - name: install Python3.7 and pip
+          apt:
+            name: 
+              - python3.7
+            update_cache: yes
+            state: latest
+ 
+     when: ansible_os_family == "Debian" 
+  
+      block:
+
+        - name: pre-task
+          yum:
+            name:
+              - gcc
+              - openssl-devel
+              - bzip2-devel
+              - libffi-devel
+            update_cache: yes
+            state: latest
+  
+        - name: download python 3.7.9 source code
+          get_url:
+            url: https://www.python.org/ftp/python/3.7.9/Python-3.7.9.tgz
+            dest: /usr/src/Python-3.7.9.tgz
+            mode: '0644'
+  
+        - name: unpack python 3.7.9 source code
+          unarchive:
+            src: /usr/src/Python-3.7.9.tgz
+            dest: /usr/src/
+            remote_src: yes
+    
+        - name: run ./configure target
+          command: chdir=/usr/src/Python-3.7.9 ./configure --enable-optimizations
+    
+        - name: run make install target
+          make:
+            chdir: /usr/src/Python-3.7.9
+            target: install
+            file: /usr/src/Python-3.7.9/Makefile
+    
+        - name: remove python source code archive
+          file:
+            path: /usr/src/Python-3.7.9.tgz
+            state: absent
+  
+      when: ansible_os_family == "RedHat" 
+  
+      - name: delete soft link to python3
+        file: 
+          path: /usr/bin/python3
+          state: absent
+        
+      - name: create soft link to python3
+        file: 
+          src: /usr/local/bin/python3.7
+          dest: /usr/bin/python3
+          state: link
+
+    when: "{{python_version}}" != "/usr/bin/python3.7"
+ 
+    - name: create working dir
+      file:
+        path: /root/wp
+        state: directory
+        mode: '0644'
+
+   - name: install other packages for RadHat based
+     yum:
+       name: 
+         - python3-pip
+         - vim
+         - tmux
+       state: latest
+       update_cache: yes
+     when: ansible_os_family == "RedHat" 
+
+   - name: install other packages for Debian based
+     apt:
+       name:
+         - epel-release 
+         - python-pip
+         - vim
+         - tmux
+       state: latest
+       update_cache: yes
+     when: ansible_os_family == "Debian" 
+
+    - name: install requirements
+      pip:
+        name: 
+          - requests
+        state: latest
